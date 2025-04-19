@@ -8,41 +8,17 @@ const port = process.env.PORT;
 
 const app = express();
 
-// dont save cache
-app.use((req, res, next) => {
-  res.setHeader("Cache-Control", "no-store");
-  next();
-});
-
 // config form data and json
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // solve cors
-app.use((req, res, next) => {
-  console.log("🔍 Método:", req.method);
-  console.log("🔍 Origin:", req.headers.origin);
-  console.log("🔍 Path:", req.path);
-
-  const allowedOrigins = ["https://portfolio-cyan-sigma-53.vercel.app"];
-  const origin = req.headers.origin;
-
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
-
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.setHeader("Cache-Control", "no-store");
-
-  if (req.method === "OPTIONS") {
-    console.log("🔁 Resposta OPTIONS enviada");
-    return res.sendStatus(204);
-  }
-
-  next();
-});
+app.use(
+  cors({
+    credentials: true,
+    origin: "*",
+  })
+);
 
 // directory static files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
