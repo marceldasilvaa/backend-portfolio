@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(
   cors({
     credentials: true,
-    origin: "*",
+    origin: "https://frontend-portfolio-black.vercel.app/",
   })
 );
 
