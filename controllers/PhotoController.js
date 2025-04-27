@@ -1,19 +1,43 @@
 const Photo = require("../models/Photo");
 const User = require("../models/User");
-const mongoose = require("mongoose");
+const { supabase } = require("../config/supabaseClient");
 
 // insert a photo
 const insertPhoto = async (req, res) => {
   const { title, description } = req.body;
-  const image = req.file.filename;
+  const file = req.file;
 
   const userReq = req.user;
   const user = await User.findById(userReq._id);
 
+  if (!file) {
+    return res.status(400).json({ errors: ["Nenhuma imagem foi enviada."] });
+  }
+
+  // unique name for file
+  const fileName = `${Date.now()}-${file.originalname}`;
+
+  // upload to supabase
+  const { data, error } = await supabase.storage
+    .from("portfolio")
+    .upload(`photos/${fileName}`, file.buffer, { contentType: file.mimetype });
+
+  if (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ errors: ["Erro ao fazer upload da imagem."] });
+  }
+
+  // get the public URL
+  const { data: publicUrlData } = supabase.storage
+    .from("portfolio")
+    .getPublicUrl(`photos/${fileName}`);
+
   const newPhoto = await Photo.create({
     title,
     description,
-    image,
+    image: publicUrlData.publicUrl,
     userId: user._id,
     userName: user.name,
   });
