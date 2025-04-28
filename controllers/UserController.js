@@ -122,7 +122,6 @@ const update = async (req, res) => {
       const { data, error } = await supabase.storage
         .from("portfolio")
         .upload(`users/${fileName}`, file.buffer);
-      user.userProfile = profileImage;
 
       if (error) {
         console.error(error);
@@ -132,7 +131,7 @@ const update = async (req, res) => {
       }
 
       // save image name
-      user.userProfile = fileName;
+      user.userProfile = `users/${fileName}`;
     }
 
     await user.save();
