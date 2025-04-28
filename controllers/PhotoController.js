@@ -34,10 +34,13 @@ const insertPhoto = async (req, res) => {
     .from("portfolio")
     .getPublicUrl(`photos/${fileName}`);
 
+  const baseUrl = "https://myhyuthmduqbjjvlibdc.supabase.co"
+  const fullPublicUrl = baseUrl + publicUrlData.pulicUrl;
+
   const newPhoto = await Photo.create({
     title,
     description,
-    image: publicUrlData.publicUrl,
+    image: fullPublicUrl,
     userId: user._id,
     userName: user.name,
   });
