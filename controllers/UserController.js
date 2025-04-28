@@ -1,5 +1,5 @@
 const User = require("../models/User");
-const mongoose = require("mongoose");
+const { supabase } = require("../config/supabaseClient");
 
 const bcrypt = require("bcryptjs");
 
@@ -87,11 +87,15 @@ const login = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { name, password, bio } = req.body;
-    const profileImage = req.file ? req.file.filename : null;
+    const profileImage = req.file ? req.file : null;
 
     const reqUser = req.user;
 
     const user = await User.findById(reqUser._id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ errors: ["Usuário não encontrado."] });
+    }
 
     if (name) {
       user.name = name;
@@ -101,16 +105,34 @@ const update = async (req, res) => {
       // password hash
       const salt = await bcrypt.genSalt();
       const passwordHash = await bcrypt.hash(password, salt);
-
       user.password = passwordHash;
-    }
-
-    if (profileImage) {
-      user.userProfile = profileImage;
     }
 
     if (bio) {
       user.bio = bio;
+    }
+
+    if (profileImage) {
+      const file = profileImage;
+
+      // set file name
+      const fileName = `${Date.now()}-${file.originalname}`;
+
+      // make upload in supabase
+      const { data, error } = await supabase.storage
+        .from("portfolio")
+        .upload(`users/${fileName}`, file.buffer);
+      user.userProfile = profileImage;
+
+      if (error) {
+        console.error(error);
+        return res
+          .status(500)
+          .json({ errors: ["Erro ao fazer upload da imagem no Supabase."] });
+      }
+
+      // save image name
+      user.userProfile = fileName;
     }
 
     await user.save();
