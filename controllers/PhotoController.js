@@ -30,11 +30,17 @@ const insertPhoto = async (req, res) => {
   }
 
   // get the public URL
-  const { data: publicUrlData } = supabase.storage
+  const { data: publicUrlData, error: publicUrlError } = supabase.storage
     .from("portfolio")
     .getPublicUrl(`photos/${fileName}`);
 
-    const publicUrl = publicUrlData.publicUrl
+  if (publicUrlError || !publicUrlData || !publicUrlData.publicUrl) {
+    return res
+      .status(500)
+      .json({ errors: ["Erro ao obter a URL pública da imagem."] });
+  }
+
+  const publicUrl = publicUrlData.publicUrl;
 
   const newPhoto = await Photo.create({
     title,
