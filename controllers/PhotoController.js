@@ -15,12 +15,16 @@ const insertPhoto = async (req, res) => {
   }
 
   // unique name for file
-  const fileName = `${Date.now()}-${file.originalname}`;
+  const fileName = `${Date.now()}-${file.originalname.replace(
+    /[^a-zA-Z0-9.]/g,
+    "-"
+  )}`;
+  const filePath = `photos/${fileName}`; // Caminho completo no storage
 
   // upload to supabase
   const { data, error } = await supabase.storage
     .from("portfolio")
-    .upload(`photos/${fileName}`, file.buffer, { contentType: file.mimetype });
+    .upload(filePath, file.buffer, { contentType: file.mimetype });
 
   if (error) {
     console.error(error);
@@ -29,34 +33,29 @@ const insertPhoto = async (req, res) => {
       .json({ errors: ["Erro ao fazer upload da imagem."] });
   }
 
-  // get the public URL
-  const { data: publicUrlData, error: publicUrlError } = supabase.storage
-    .from("portfolio")
-    .getPublicUrl(`photos/${fileName}`);
-
-  if (publicUrlError || !publicUrlData || !publicUrlData.publicUrl) {
-    return res
-      .status(500)
-      .json({ errors: ["Erro ao obter a URL pública da imagem."] });
-  }
-
-  const publicUrl = publicUrlData.publicUrl;
-
+  // make a data object
   const newPhoto = await Photo.create({
     title,
     description,
-    image: publicUrl,
+    image: filePath,
     userId: user._id,
     userName: user.name,
   });
 
   if (!newPhoto) {
+    // Rollback: remove a imagem se falhar ao criar o registro
+    await supabase.storage.from("portfolio").remove([filePath]);
     return res.status(422).json({
       errors: ["Ocorreu um erro, por favor tente novamente mais tarde."],
     });
   }
 
-  res.status(201).json(newPhoto);
+  const fullImageUrl = `https://myhyuthmduqbjjvlibdc.supabase.co/storage/v1/object/public/portfolio/${filePath}`;
+
+  res.status(201).json({
+    ...newPhoto.toObject(),
+    imageUrl: fullImageUrl,
+  });
 };
 
 // remove a photo
