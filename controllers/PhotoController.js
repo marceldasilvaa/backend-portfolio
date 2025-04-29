@@ -34,10 +34,12 @@ const insertPhoto = async (req, res) => {
     .from("portfolio")
     .getPublicUrl(`photos/${fileName}`);
 
+    const publicUrl = publicUrlData.publicUrl
+
   const newPhoto = await Photo.create({
     title,
     description,
-    image: publicUrlData.publicUrl,
+    image: publicUrl,
     userId: user._id,
     userName: user.name,
   });
