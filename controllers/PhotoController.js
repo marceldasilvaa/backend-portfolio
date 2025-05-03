@@ -4,7 +4,7 @@ const { supabase } = require("../config/supabaseClient");
 
 // insert a photo
 const insertPhoto = async (req, res) => {
-  const { title, description } = req.body;
+  const { title, description, link } = req.body;
   const file = req.file;
 
   const userReq = req.user;
@@ -37,6 +37,7 @@ const insertPhoto = async (req, res) => {
   const newPhoto = await Photo.create({
     title,
     description,
+    link,
     image: filePath,
     userId: user._id,
     userName: user.name,

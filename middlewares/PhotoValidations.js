@@ -25,6 +25,12 @@ const photoInsertValidation = () => {
 
       return true;
     }),
+    body("link")
+      .not()
+      .isEmpty()
+      .withMessage("O link é obrigatório.")
+      .isURL()
+      .withMessage("O link deve ser uma URL válida."),
   ];
 };
 
